@@ -1,88 +1,119 @@
-# Optimisation Stochastique avec SGD
+# Optimisation par Descente de Gradient Stochastique (SGD)
 
-## Description du Projet
-Ce projet vise à minimiser une fonction de coût définie comme une espérance :
+## Problème d'optimisation
 
-\[
-f(x) = \mathbb{E}[F(x, \xi)],
-\]
+Nous cherchons à minimiser une fonction de coût définie comme une espérance :
 
-avec la fonction cible :
+$$
+f(x) = \mathbb{E}[F(x, \xi)]
+$$
 
-\[
-F(x, \xi) = (x - \xi)^2 + \sin(x - \xi) + e^{-\xi}(x^2 - 2x + 1),
-\]
+où la fonction cible est donnée par :
 
-et $\xi$ suit une loi normale $\mathcal{N}(\mu, \sigma^2)$.
+$$
+F(x, \xi) = (x - \xi)^2 + \sin(x - \xi) + e^{-\xi}(x^2 - 2x + 1)
+$$
 
-Nous utilisons l'algorithme **Stochastic Gradient Descent (SGD)** pour approximer la solution optimale $x^*$ en mettant à jour $x$ à chaque itération selon :
+avec $\xi$ suivant une loi normale : $\xi \sim \mathcal{N}(\mu, \sigma^2)$.
 
-\[
-x_{n+1} = x_n - \gamma_n \nabla F(x_n, \xi_n),
-\]
+La solution théorique $x^*$ est le minimum global de $f(x)$. Nous utilisons l'algorithme **SGD** (Stochastic Gradient Descent) pour approximer cette solution.
 
-avec un pas d'apprentissage adaptatif :
+## Gradient Stochastique
 
-\[
-\gamma_n = \frac{\gamma_0}{1 + n^\alpha}, \quad \alpha \in [0.5, 1].
-\]
+Le gradient de $F(x, \xi)$ est donné par :
 
-## Objectifs
-- Approximer $x^*$ par SGD.
-- Analyser la convergence mathématiquement et visuellement.
-- Visualiser la variance du gradient stochastique.
-- Etudier le comportement de $F(x, \xi)$ en fonction de $x$ et $\xi$.
+$$
+\nabla F(x, \xi) = 2(x - \xi) + \cos(x - \xi) + e^{-\xi}(2x - 2)
+$$
 
-## Conditions de Convergence
-L'algorithme suit le théorème de **Robbins-Siegmund**, qui garantit la convergence sous certaines hypothèses, notamment :
+À chaque itération $n$, la mise à jour de $x$ suit la règle :
 
-\[
-\sum_{n=1}^{\infty} \gamma_n = \infty, \quad \sum_{n=1}^{\infty} \gamma_n^2 < \infty.
-\]
+$$
+x_{n+1} = x_n - \gamma_n \nabla F(x_n, \xi_n)
+$$
 
-Une fonction de Lyapunov $L(x_n) = \frac{1}{2} (x_n - x^*)^2$ est utilisée pour analyser la stabilité et la convergence.
+avec :
+- $\gamma_n$ un pas d'apprentissage,
+- $\xi_n$ un échantillon aléatoire indépendant.
+
+Nous choisissons une séquence de pas satisfaisant les conditions de Robbins-Siegmund :
+
+$$
+\sum_{n=1}^\infty \gamma_n = \infty, \quad \sum_{n=1}^\infty \gamma_n^2 < \infty
+$$
+
+avec :
+
+$$
+\gamma_n = \frac{\gamma_0}{1 + n^\alpha}, \quad \alpha \in [0.5, 1]
+$$
+
+## Approximations et Visualisations
+
+Nous approximons $f(x)$ par une moyenne empirique :
+
+$$
+f(x) \approx \frac{1}{N} \sum_{i=1}^{N} F(x, \xi_i)
+$$
+
+et son gradient :
+
+$$
+\nabla f(x) \approx \frac{1}{N} \sum_{i=1}^{N} \nabla F(x, \xi_i)
+$$
+
+Le zéro du gradient correspond aux points critiques de la fonction.
+
+Nous simulons plusieurs valeurs de $\xi$ pour observer la variance du gradient stochastique et la difficulté d'approximation par SGD :
+
+$$
+\text{Var}(\nabla F(x, \xi))
+$$
+
+Nous analysons aussi l'influence de $\xi$ sur $F(x, \xi)$ en le fixant à certaines valeurs typiques ($\mu$, $\mu \pm \sigma$, $\mu \pm 2\sigma$).
+
+## Convergence et Analyse Théorique
+
+Le théorème de Robbins-Siegmund garantit que sous certaines conditions :
+
+1. $\|x_{n+1} - x_n\| \to 0$ presque sûrement.
+2. La suite $L(x_n)$ converge presque sûrement vers une limite $L_\infty$.
+
+Nous utilisons la fonction de Lyapunov suivante :
+
+$$
+L(x_n) = \frac{1}{2} (x_n - x^*)^2
+$$
+
+et analysons l'évolution de $L(x_n)$ au cours des itérations.
+
+Nous utilisons également l'expression suivante pour estimer l'erreur totale :
+
+$$
+\frac{1}{\Gamma(1 + CL \gamma_k^2)} \left( CL \sum_{k \geq n+2} \gamma_k^2 + \frac{CL \gamma_{n+1}^2}{1 + CL \gamma_{n+1}^2} \right)
+$$
+
+avec :
+- $CL$ une constante positive,
+- Le premier terme mesurant l'impact immédiat du bruit stochastique,
+- Le second terme représentant l'effet cumulé des itérations futures.
+
+## Paramètres de Simulation
+
+- **Distribution de $\xi$** : $\mathcal{N}(2,1)$
+- **Paramètres du pas** : $\gamma_n = \frac{1}{n^{0.7}}$
+- **Nombre d'itérations** : $N_0 = 1000$
+- **Constante de Lyapunov** : $CL = 1.0$
 
 ## Implémentation
-L'approximation de $f(x)$ et de son gradient est faite par moyennage empirique :
 
-\[
-f(x) \approx \frac{1}{N} \sum_{i=1}^{N} F(x, \xi_i),\quad \nabla f(x) \approx \frac{1}{N} \sum_{i=1}^{N} \nabla F(x, \xi_i).
-\]
-
-Où les $\xi_i$ sont échantillonnés depuis $\mathcal{N}(\mu, \sigma^2)$.
-
-## Visualisation et Analyse
-- **Tracé de $f(x)$** pour observer les minimas locaux et globaux.
-- **Visualisation de la variance du gradient stochastique**.
-- **Tracé de $L(x_n)$** pour suivre la convergence.
-- **Estimation de l'erreur résiduelle** à l'aide de la formule :
-
-\[
-\frac{1}{\Gamma(1 + CL \gamma_k^2)} \left( CL \sum_{k \geq n+2} \gamma_k^2 + \frac{CL \gamma_{n+1}^2}{1 + CL \gamma_{n+1}^2} \right).
-\]
-
-## Paramètres Utilisés
-- $\mu = 2, \sigma = 1$
-- $\alpha = 0.7$
-- $\gamma_0 = 0.1$
-- Nombre d'itérations : $N_0 = 1000$
-- CL = 1.0
-
-## Prérequis
-- Python 3.x
-- Numpy, Matplotlib
-
-## Exécution
-Exécutez le script principal :
-
-```bash
-python sgd_optimization.py
-```
-
-## Auteurs
-Projet d’optimisation stochastique utilisant SGD pour l’approximation de minimas d’une fonction de coût probabiliste.
+Le projet inclut :
+- Une implémentation de **SGD** pour minimiser $f(x)$,
+- Des visualisations de la fonction de coût et du gradient,
+- Une analyse de la convergence basée sur Robbins-Siegmund,
+- Une étude des variations de $F(x, \xi)$ en fonction de $\xi$.
 
 ---
 
-Ce fichier **README** est une présentation générale du projet. Pour plus de détails, référez-vous au code source et aux commentaires inclus dans les scripts Python.
+🚀 **Ce projet permet de mieux comprendre la convergence de SGD en présence de bruit et de vérifier expérimentalement les conditions théoriques de Robbins-Siegmund.**
 
