@@ -1,0 +1,2 @@
+# Optimisation-Stochastique
+Algorithme SGD
